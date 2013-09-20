@@ -98,6 +98,7 @@ int main(int argc, char *argv[])
 		starttime[taskid] = MPI_Wtime();
 
 		unsigned long npackets = 500000;
+		unsigned long totmbs = 0;
 		if(taskid == MASTER) cout << "npacket: " << npackets << endl;
 		for(int i=0; i<npackets; i++) {
 
@@ -116,23 +117,34 @@ int main(int argc, char *argv[])
 							//size = packet.getInputPacketDimension(rawPacket);
 							//cout << i << " S" << (int) rawPackets[0] << " - " << (int) rawPackets[1] << endl;
 							MPI_Send(rawPackets, size, MPI_UNSIGNED_CHAR, dest, 1, MPI_COMM_WORLD); //AB
+							totmbs += size;
 
 
 							//printf("send npacket: %d\n", npacket);
 					} else {
-							//source = MASTER;
-							MPI_Recv(&rawPacketr, size, MPI_UNSIGNED_CHAR, MASTER, 1, MPI_COMM_WORLD, &status); //AB
+
+						if(taskid == 1) {
+							MPI_Recv(&rawPacketr, size, MPI_UNSIGNED_CHAR, source=MASTER, 1, MPI_COMM_WORLD, &status); //AB
 							//endtime = MPI_Wtime();
 
 							//cout << i << " R" << (int) rawPacketr[0] << " - " << (int) rawPacketr[1] << endl;
 
-							/*
-							dword sizep = -1;
-							sizep = buff.packet.getInputPacketDimension(rawPacketr);
-							int type = -1;
-							type = buff.packet.getInputPacketType(rawPacketr);
-							//cout << "Packetr #" << i << " size: " << sizep << " byte. type: " << type << endl;
 
+							//dword sizep = -1;
+							//sizep = buff.packet.getInputPacketDimension(rawPacketr);
+
+
+							if(numtasks > 2) {
+								int type = -1;
+								type = buff.packet.getInputPacketType(rawPacketr);
+								if(type == 1) {
+									dest = 2;
+									MPI_Send(&rawPacketr, size, MPI_UNSIGNED_CHAR, dest, 1, MPI_COMM_WORLD);
+									totmbs += size;
+								}
+							}
+							//cout << "Packetr #" << i << " size: " << sizep << " byte. type: " << type << endl;
+							/*
 							switch(type) {
 							case 1:
 								trtel.setStream(rawPacketr);
@@ -141,6 +153,12 @@ int main(int argc, char *argv[])
 
 							};
 							*/
+						}
+						if(numtasks > 2 && taskid == 2){
+							source = 1;
+							MPI_Recv(&rawPacketr, size, MPI_UNSIGNED_CHAR, source, 1, MPI_COMM_WORLD, &status);
+
+						}
 
 					}
 			}
@@ -151,6 +169,7 @@ int main(int argc, char *argv[])
 		unsigned long totmb = (size * npackets * 1) / 1000000;
 		printf("%d - That took %f seconds\n",taskid, endtime[taskid]-starttime[taskid]);
 		if(taskid == MASTER)  cout <<  taskid << " - MB " <<  totmb  << endl;
+		cout << taskid << " - REAL MB: " << totmbs / 1000000 << endl;
 		printf("%d - %f MB/s\n", taskid, (totmb/(endtime[taskid]-starttime[taskid])) );
 		//printf("Clock resolution: %f\n",MPI_Wtick());
 
