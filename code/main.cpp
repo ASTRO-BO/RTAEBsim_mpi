@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 
 							//cout << i << " R" << (int) rawPacketr[0] << " - " << (int) rawPacketr[1] << endl;
 
-
+							/*
 							dword sizep = -1;
 							sizep = buff.packet.getInputPacketDimension(rawPacketr);
 							int type = -1;
@@ -140,6 +140,7 @@ int main(int argc, char *argv[])
 								break;
 
 							};
+							*/
 
 					}
 			}
